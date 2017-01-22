@@ -29,6 +29,9 @@ type gnomeVersion struct {
 }
 
 const baseURL = "https://extensions.gnome.org"
+const bold = csi + "1m"
+const csi = "\x1b["
+const normal = csi + "0m"
 
 func main() {
 	app := cli.NewApp()
@@ -105,7 +108,7 @@ func search(ctx *cli.Context) error {
 			fmt.Println()
 		}
 
-		fmt.Printf("%s%s%s - %d - %s\n", "\x1b[1m", extension.Name, "\x1b[0m", extension.ID, extension.Description)
+		fmt.Printf("%s%s%s - %s - %s\n", bold, extension.Name, normal, extension.UUID, extension.Description)
 	}
 
 	return nil
