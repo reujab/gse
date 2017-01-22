@@ -1,10 +1,26 @@
 package main
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/url"
+	"os"
+
+	"gopkg.in/urfave/cli.v1"
 )
+
+type extensionQuery struct {
+	Extensions []*struct {
+		Creator     string `json:"creator"`
+		Description string `json:"description"`
+		Name        string `json:"name"`
+		UUID        string `json:"uuid"`
+		ID          int    `json:"pk"`
+	} `json:"extensions"`
+}
 
 type gnomeVersion struct {
 	Major string `xml:"platform"`
@@ -13,7 +29,25 @@ type gnomeVersion struct {
 }
 
 func main() {
-	fmt.Println(getGNOMEVersion())
+	app := cli.NewApp()
+
+	app.Usage = "A GNOME Shell extension manager"
+	app.Commands = []cli.Command{
+		{
+			Name:      "search",
+			ShortName: "s",
+			Usage:     "Searches for an extension",
+			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "page, p",
+					Value: 1,
+				},
+			},
+			Action: search,
+		},
+	}
+
+	check(app.Run(os.Args))
 }
 
 func check(err error) {
@@ -32,4 +66,47 @@ func getGNOMEVersion() string {
 	check(xml.Unmarshal(file, data))
 
 	return fmt.Sprintf("%s.%s.%s", data.Major, data.Minor, data.Patch)
+}
+
+func search(ctx *cli.Context) error {
+	args := ctx.Args()
+
+	if len(args) > 1 {
+		return cli.ShowCommandHelp(ctx, "search")
+	}
+
+	query, _ := url.ParseQuery("")
+
+	query.Add("page", ctx.String("page"))
+	query.Add("search", args.First())
+	query.Add("shell_version", getGNOMEVersion())
+
+	res, err := http.Get("https://extensions.gnome.org/extension-query/?" + query.Encode())
+
+	check(err)
+
+	if res.StatusCode != 200 {
+		return cli.NewExitError("404", 1)
+	}
+
+	bytes, err := ioutil.ReadAll(res.Body)
+
+	check(err)
+
+	extensions := new(extensionQuery)
+
+	err = json.Unmarshal(bytes, extensions)
+
+	check(err)
+
+	// TODO: prettier output
+	for i, extension := range extensions.Extensions {
+		if i != 0 {
+			fmt.Println()
+		}
+
+		fmt.Printf("%s%s%s - %d - %s\n", "\x1b[1m", extension.Name, "\x1b[0m", extension.ID, extension.Description)
+	}
+
+	return nil
 }
