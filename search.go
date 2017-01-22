@@ -22,7 +22,7 @@ func search(ctx *cli.Context) error {
 	args := ctx.Args()
 
 	if len(args) > 1 {
-		return cli.ShowCommandHelp(ctx, "search")
+		return cli.ShowCommandHelp(ctx, ctx.Command.Name)
 	}
 
 	query, _ := url.ParseQuery("")
