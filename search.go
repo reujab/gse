@@ -25,7 +25,7 @@ func search(ctx *cli.Context) error {
 		return cli.ShowCommandHelp(ctx, ctx.Command.Name)
 	}
 
-	query, _ := url.ParseQuery("")
+	query := make(url.Values)
 
 	query.Add("page", ctx.String("page"))
 	query.Add("search", args.First())
