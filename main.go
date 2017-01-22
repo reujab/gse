@@ -34,16 +34,16 @@ func main() {
 	app.Usage = "A GNOME Shell extension manager"
 	app.Commands = []cli.Command{
 		{
-			Name:      "search",
-			ShortName: "s",
-			Usage:     "Searches for an extension",
+			Action: search,
 			Flags: []cli.Flag{
 				cli.IntFlag{
 					Name:  "page, p",
 					Value: 1,
 				},
 			},
-			Action: search,
+			Name:      "search",
+			ShortName: "s",
+			Usage:     "Searches for an extension",
 		},
 	}
 
