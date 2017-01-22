@@ -97,9 +97,7 @@ func search(ctx *cli.Context) error {
 
 	extensions := new(extensionQuery)
 
-	err = json.Unmarshal(body, extensions)
-
-	check(err)
+	check(json.Unmarshal(body, extensions))
 
 	// TODO: prettier output
 	for i, extension := range extensions.Extensions {
