@@ -28,6 +28,8 @@ type gnomeVersion struct {
 	Patch string `xml:"micro"`
 }
 
+const baseURL = "https://extensions.gnome.org"
+
 func main() {
 	app := cli.NewApp()
 
@@ -81,7 +83,7 @@ func search(ctx *cli.Context) error {
 	query.Add("search", args.First())
 	query.Add("shell_version", getGNOMEVersion())
 
-	res, err := http.Get("https://extensions.gnome.org/extension-query/?" + query.Encode())
+	res, err := http.Get(baseURL + "/extension-query/?" + query.Encode())
 
 	check(err)
 
