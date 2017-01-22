@@ -91,13 +91,13 @@ func search(ctx *cli.Context) error {
 		return cli.NewExitError("404", 1)
 	}
 
-	bytes, err := ioutil.ReadAll(res.Body)
+	body, err := ioutil.ReadAll(res.Body)
 
 	check(err)
 
 	extensions := new(extensionQuery)
 
-	err = json.Unmarshal(bytes, extensions)
+	err = json.Unmarshal(body, extensions)
 
 	check(err)
 
