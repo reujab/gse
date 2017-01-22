@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/user"
 
 	"gopkg.in/urfave/cli.v1"
 )
@@ -25,6 +26,12 @@ func main() {
 
 	app.Usage = "A GNOME Shell extension manager"
 	app.Commands = []cli.Command{
+		{
+			Action:    install,
+			Name:      "install",
+			ShortName: "i",
+			Usage:     "Installs an extension by id",
+		},
 		{
 			Action: search,
 			Flags: []cli.Flag{
@@ -58,4 +65,12 @@ func getGNOMEVersion() string {
 	check(xml.Unmarshal(file, data))
 
 	return fmt.Sprintf("%s.%s.%s", data.Major, data.Minor, data.Patch)
+}
+
+func getHomeDir() string {
+	usr, err := user.Current()
+
+	check(err)
+
+	return usr.HomeDir
 }
