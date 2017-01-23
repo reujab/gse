@@ -137,23 +137,23 @@ func Install(arg string, enable bool) error {
 		}
 	}
 
-	stdout, err := exec.Command("gsettings", "get", "org.gnome.shell", "enabled-extensions").Output()
-
-	if err != nil {
-		return err
-	}
-
-	var enabled []string
-
-	// the output of gsettings is not valid JSON, as it uses single quotes, but it
-	// is valid YAML
-	err = yaml.Unmarshal(stdout, &enabled)
-
-	if err != nil {
-		return err
-	}
-
 	if enable {
+		stdout, err := exec.Command("gsettings", "get", "org.gnome.shell", "enabled-extensions").Output()
+
+		if err != nil {
+			return err
+		}
+
+		var enabled []string
+
+		// the output of gsettings is not valid JSON, as it uses single quotes, but it
+		// is valid YAML
+		err = yaml.Unmarshal(stdout, &enabled)
+
+		if err != nil {
+			return err
+		}
+
 		alreadyEnabled := false
 
 		for _, extension := range enabled {
