@@ -12,6 +12,7 @@ type extensionQuery struct {
 	Extensions []*Extension `json:"extensions"`
 }
 
+// Extension is the response of https://extensions.gnome.org/extension-query/.
 type Extension struct {
 	Creator     string `json:"creator"`
 	CreatorURL  string `json:"creator_url"`
