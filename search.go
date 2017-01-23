@@ -44,7 +44,7 @@ func Search(search, page, version string) ([]*Extension, error) {
 	}
 
 	if res.StatusCode != 200 {
-		return nil, errors.New("404")
+		return nil, errors.New("non-200 status")
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
