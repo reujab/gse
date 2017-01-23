@@ -134,7 +134,11 @@ func Install(arg string, enable bool) error {
 		}
 	}
 
-	Enable(details.UUID)
+	err = Enable(details.UUID)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
