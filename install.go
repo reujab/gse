@@ -10,13 +10,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
-
-	"gopkg.in/yaml.v2"
 )
 
 var idRegex = regexp.MustCompile(`^\d+$`)
@@ -137,49 +134,7 @@ func Install(arg string, enable bool) error {
 		}
 	}
 
-	if enable {
-		stdout, err := exec.Command("gsettings", "get", "org.gnome.shell", "enabled-extensions").Output()
-
-		if err != nil {
-			return err
-		}
-
-		var enabled []string
-
-		// the output of gsettings is not valid JSON, as it uses single quotes, but it
-		// is valid YAML
-		err = yaml.Unmarshal(stdout, &enabled)
-
-		if err != nil {
-			return err
-		}
-
-		alreadyEnabled := false
-
-		for _, extension := range enabled {
-			if extension == details.UUID {
-				alreadyEnabled = true
-
-				break
-			}
-		}
-
-		if !alreadyEnabled {
-			enabled = append(enabled, details.UUID)
-
-			json, err := json.Marshal(&enabled)
-
-			if err != nil {
-				return err
-			}
-
-			err = exec.Command("gsettings", "set", "org.gnome.shell", "enabled-extensions", string(json)).Run()
-
-			if err != nil {
-				return err
-			}
-		}
-	}
+	Enable(details.UUID)
 
 	return nil
 }

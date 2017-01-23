@@ -27,6 +27,50 @@ func main() {
 				}
 
 				for _, arg := range args {
+					err := gse.Disable(arg)
+
+					if err != nil {
+						return err
+					}
+				}
+
+				return nil
+			},
+			Name:      "disable",
+			ShortName: "d",
+			Usage:     "Disables an extension by UUID",
+		},
+		{
+			Action: func(ctx *cli.Context) error {
+				args := ctx.Args()
+
+				if len(args) == 0 {
+					return cli.ShowCommandHelp(ctx, ctx.Command.Name)
+				}
+
+				for _, arg := range args {
+					err := gse.Enable(arg)
+
+					if err != nil {
+						return err
+					}
+				}
+
+				return nil
+			},
+			Name:      "enable",
+			ShortName: "e",
+			Usage:     "Enables an extension by UUID",
+		},
+		{
+			Action: func(ctx *cli.Context) error {
+				args := ctx.Args()
+
+				if len(args) == 0 {
+					return cli.ShowCommandHelp(ctx, ctx.Command.Name)
+				}
+
+				for _, arg := range args {
 					err := gse.Install(arg, true)
 
 					if err != nil {
