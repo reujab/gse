@@ -1,4 +1,4 @@
-package main
+package gse
 
 import (
 	"archive/zip"
@@ -11,130 +11,149 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"strconv"
 
-	"gopkg.in/urfave/cli.v1"
 	"gopkg.in/yaml.v2"
 )
 
-type extensionDetails struct {
-	UUID     string `json:"uuid"`
-	Versions map[string]struct {
-		PK int `json:"pk"`
-	} `json:"shell_version_map"`
-}
-
 var idRegex = regexp.MustCompile(`^\d+$`)
-var installErr = cli.NewExitError("Failed to install some extensions.", 1)
 var uuidRegex = regexp.MustCompile(`.+@.+\..+`)
 
-func install(ctx *cli.Context) (exitErr error) {
-	args := ctx.Args()
+// Install installs an extension by ID (pk) or UUID.
+func Install(arg string, enable bool) error {
+	query := make(url.Values)
 
-	if len(args) == 0 {
-		return cli.ShowCommandHelp(ctx, ctx.Command.Name)
+	if idRegex.MatchString(arg) {
+		query.Add("pk", arg)
+	} else if uuidRegex.MatchString(arg) {
+		query.Add("uuid", arg)
+	} else {
+		return fmt.Errorf("%s%s%s is not an ID or a UUID", bold, arg, normal)
 	}
 
-	for _, arg := range args {
-		query := make(url.Values)
+	res, err := http.Get(baseURL + "/extension-info/?" + query.Encode())
 
-		if idRegex.MatchString(arg) {
-			query.Add("pk", arg)
-		} else if uuidRegex.MatchString(arg) {
-			query.Add("uuid", arg)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 200 {
+		return fmt.Errorf("%d on /extension-info/?%s\n", res.StatusCode, query.Encode())
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		return err
+	}
+
+	details := new(Extension)
+
+	err = json.Unmarshal(body, details)
+
+	if err != nil {
+		return err
+	}
+
+	var pk int
+
+	for _, version := range details.Versions {
+		if version.PK > pk {
+			pk = version.PK
+		}
+	}
+
+	query = make(url.Values)
+
+	query.Add("version_tag", strconv.Itoa(pk))
+
+	res, err = http.Get(baseURL + "/download-extension/" + details.UUID + ".shell-extension.zip?" + query.Encode())
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 200 {
+		panic("non-200 status")
+	}
+
+	body, err = ioutil.ReadAll(res.Body)
+
+	if err != nil {
+		return err
+	}
+
+	reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
+
+	if err != nil {
+		return err
+	}
+
+	usr, err := user.Current()
+
+	if err != nil {
+		return err
+	}
+
+	extensionDir := filepath.Join(usr.HomeDir, ".local", "share", "gnome-shell", "extensions", details.UUID)
+
+	for _, file := range reader.File {
+		info := file.FileInfo()
+		dest := filepath.Join(extensionDir, file.Name)
+
+		if info.IsDir() {
+			err = os.MkdirAll(dest, info.Mode())
+
+			if err != nil {
+				return err
+			}
 		} else {
-			exitErr = installErr
+			err = os.MkdirAll(filepath.Dir(dest), 0755)
 
-			fmt.Fprintln(os.Stderr, bold+arg+normal+" is not an ID or a UUID.")
+			if err != nil {
+				return err
+			}
 
-			continue
-		}
+			openedFile, err := file.Open()
 
-		res, err := http.Get(baseURL + "/extension-info/?" + query.Encode())
+			if err != nil {
+				return err
+			}
 
-		check(err)
+			destFile, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE, info.Mode())
 
-		if res.StatusCode != 200 {
-			fmt.Fprintf(os.Stderr, "%d on /extension-info/?%s\n", res.StatusCode, query.Encode())
+			if err != nil {
+				return err
+			}
 
-			exitErr = installErr
+			_, err = io.Copy(destFile, openedFile)
 
-			continue
-		}
-
-		body, err := ioutil.ReadAll(res.Body)
-
-		check(err)
-
-		details := new(extensionDetails)
-
-		check(json.Unmarshal(body, details))
-
-		var pk int
-
-		for _, version := range details.Versions {
-			if version.PK > pk {
-				pk = version.PK
+			if err != nil {
+				return err
 			}
 		}
+	}
 
-		query = make(url.Values)
+	stdout, err := exec.Command("gsettings", "get", "org.gnome.shell", "enabled-extensions").Output()
 
-		query.Add("version_tag", strconv.Itoa(pk))
+	if err != nil {
+		return err
+	}
 
-		res, err = http.Get(baseURL + "/download-extension/" + details.UUID + ".shell-extension.zip?" + query.Encode())
+	var enabled []string
 
-		check(err)
+	// the output of gsettings is not valid JSON, as it uses single quotes, but it
+	// is valid YAML
+	err = yaml.Unmarshal(stdout, &enabled)
 
-		if res.StatusCode != 200 {
-			panic("non-200 status")
-		}
+	if err != nil {
+		return err
+	}
 
-		body, err = ioutil.ReadAll(res.Body)
-
-		check(err)
-
-		reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
-
-		check(err)
-
-		extensionDir := filepath.Join(getHomeDir(), ".local", "share", "gnome-shell", "extensions", details.UUID)
-
-		for _, file := range reader.File {
-			info := file.FileInfo()
-			dest := filepath.Join(extensionDir, file.Name)
-
-			if info.IsDir() {
-				check(os.MkdirAll(dest, info.Mode()))
-			} else {
-				check(os.MkdirAll(filepath.Dir(dest), 0755))
-
-				openedFile, err := file.Open()
-
-				check(err)
-
-				destFile, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE, info.Mode())
-
-				check(err)
-
-				_, err = io.Copy(destFile, openedFile)
-
-				check(err)
-			}
-		}
-
-		stdout, err := exec.Command("gsettings", "get", "org.gnome.shell", "enabled-extensions").Output()
-
-		check(err)
-
-		var enabled []string
-
-		// the output of gsettings is not valid JSON, as it uses single quotes, but it
-		// is valid YAML
-		check(yaml.Unmarshal(stdout, &enabled))
-
+	if enable {
 		alreadyEnabled := false
 
 		for _, extension := range enabled {
@@ -150,10 +169,17 @@ func install(ctx *cli.Context) (exitErr error) {
 
 			json, err := json.Marshal(&enabled)
 
-			check(err)
-			check(exec.Command("gsettings", "set", "org.gnome.shell", "enabled-extensions", string(json)).Run())
+			if err != nil {
+				return err
+			}
+
+			err = exec.Command("gsettings", "set", "org.gnome.shell", "enabled-extensions", string(json)).Run()
+
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	return
+	return nil
 }

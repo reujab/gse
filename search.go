@@ -1,60 +1,64 @@
-package main
+package gse
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	"gopkg.in/urfave/cli.v1"
 )
 
 type extensionQuery struct {
-	Extensions []*struct {
-		Description string `json:"description"`
-		Name        string `json:"name"`
-		UUID        string `json:"uuid"`
-	} `json:"extensions"`
+	Extensions []*Extension `json:"extensions"`
 }
 
-func search(ctx *cli.Context) error {
-	args := ctx.Args()
+type Extension struct {
+	Creator     string `json:"creator"`
+	CreatorURL  string `json:"creator_url"`
+	Description string `json:"description"`
+	Icon        string `json:"icon"`
+	Link        string `json:"link"`
+	Name        string `json:"name"`
+	PK          int    `json:"pk"`
+	Screenshot  string `json:"screenshot"`
+	UUID        string `json:"uuid"`
+	Versions    map[string]struct {
+		PK      int `json:"pk"`
+		Version int `json:"version"`
+	} `json:"shell_version_map"`
+}
 
-	if len(args) > 1 {
-		return cli.ShowCommandHelp(ctx, ctx.Command.Name)
-	}
-
+// Search searches for an extension.
+func Search(search, page, version string) ([]*Extension, error) {
 	query := make(url.Values)
 
-	query.Add("page", ctx.String("page"))
-	query.Add("search", args.First())
-	query.Add("shell_version", getGNOMEVersion())
+	query.Add("page", page)
+	query.Add("search", search)
+	query.Add("shell_version", version)
 
 	res, err := http.Get(baseURL + "/extension-query/?" + query.Encode())
 
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	if res.StatusCode != 200 {
-		return cli.NewExitError("404", 1)
+		return nil, errors.New("404")
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	extensions := new(extensionQuery)
 
-	check(json.Unmarshal(body, extensions))
+	err = json.Unmarshal(body, extensions)
 
-	// TODO: prettier output
-	for i, extension := range extensions.Extensions {
-		if i != 0 {
-			fmt.Println()
-		}
-
-		fmt.Printf("%s%s%s - %s - %s\n", bold, extension.Name, normal, extension.UUID, extension.Description)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return extensions.Extensions, nil
 }

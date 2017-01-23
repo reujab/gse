@@ -1,16 +1,13 @@
-package main
+package gse
 
 import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"os/user"
-
-	"gopkg.in/urfave/cli.v1"
 )
 
-type gnomeVersion struct {
+// GNOMEVersion defines a version of the GNOME Shell.
+type GNOMEVersion struct {
 	Major string `xml:"platform"`
 	Minor string `xml:"minor"`
 	Patch string `xml:"micro"`
@@ -21,56 +18,25 @@ const bold = csi + "1m"
 const csi = "\x1b["
 const normal = csi + "0m"
 
-func main() {
-	app := cli.NewApp()
-
-	app.Usage = "A GNOME Shell extension manager"
-	app.Commands = []cli.Command{
-		{
-			Action:    install,
-			Name:      "install",
-			ShortName: "i",
-			Usage:     "Installs an extension by id",
-		},
-		{
-			Action: search,
-			Flags: []cli.Flag{
-				cli.IntFlag{
-					Name:  "page, p",
-					Value: 1,
-				},
-			},
-			Name:      "search",
-			ShortName: "s",
-			Usage:     "Searches for an extension",
-		},
-	}
-
-	check(app.Run(os.Args))
+func (version *GNOMEVersion) String() string {
+	return fmt.Sprintf("%s.%s.%s", version.Major, version.Minor, version.Patch)
 }
 
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func getGNOMEVersion() string {
+// GetGNOMEVersion returns the current version of GNOME.
+func GetGNOMEVersion() (*GNOMEVersion, error) {
 	file, err := ioutil.ReadFile("/usr/share/gnome/gnome-version.xml")
 
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 
-	data := new(gnomeVersion)
+	version := new(GNOMEVersion)
 
-	check(xml.Unmarshal(file, data))
+	err = xml.Unmarshal(file, version)
 
-	return fmt.Sprintf("%s.%s.%s", data.Major, data.Minor, data.Patch)
-}
+	if err != nil {
+		return nil, err
+	}
 
-func getHomeDir() string {
-	usr, err := user.Current()
-
-	check(err)
-
-	return usr.HomeDir
+	return version, nil
 }
