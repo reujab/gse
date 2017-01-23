@@ -71,7 +71,7 @@ func main() {
 				}
 
 				for _, arg := range args {
-					err := gse.Install(arg, true)
+					err := gse.Install(arg, !ctx.Bool("dont-enable"))
 
 					if err != nil {
 						return err
@@ -79,6 +79,11 @@ func main() {
 				}
 
 				return nil
+			},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "dont-enable",
+				},
 			},
 			Name:      "install",
 			ShortName: "i",
