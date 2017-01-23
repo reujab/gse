@@ -33,6 +33,10 @@ func getEnabledExtensions() ([]string, error) {
 		return nil, err
 	}
 
+	if string(stdout) == "@as []\n" {
+		return make([]string, 0), nil
+	}
+
 	var enabled []string
 
 	// the output of gsettings is not valid JSON, as it uses single quotes, but it
