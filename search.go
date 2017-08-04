@@ -32,13 +32,10 @@ type Extension struct {
 // Search searches for an extension.
 func Search(search, page, version string) ([]*Extension, error) {
 	query := make(url.Values)
-
 	query.Add("page", page)
 	query.Add("search", search)
 	query.Add("shell_version", version)
-
 	res, err := http.Get(baseURL + "/extension-query/?" + query.Encode())
-
 	if err != nil {
 		return nil, err
 	}
@@ -48,15 +45,12 @@ func Search(search, page, version string) ([]*Extension, error) {
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
-
 	if err != nil {
 		return nil, err
 	}
 
 	extensions := new(extensionQuery)
-
 	err = json.Unmarshal(body, extensions)
-
 	if err != nil {
 		return nil, err
 	}
