@@ -2,7 +2,7 @@ package gse
 
 // Disable disables an extension by UUID.
 func Disable(uuid string) error {
-	enabled, err := getEnabledExtensions()
+	enabled, err := Enabled()
 	if err != nil {
 		return err
 	}

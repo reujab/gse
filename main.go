@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os/exec"
-
-	"gopkg.in/yaml.v2"
 )
 
 // GNOMEVersion defines a version of the GNOME Shell.
@@ -15,32 +13,6 @@ type GNOMEVersion struct {
 	Major string `xml:"platform"`
 	Minor string `xml:"minor"`
 	Patch string `xml:"micro"`
-}
-
-const baseURL = "https://extensions.gnome.org"
-
-func (version *GNOMEVersion) String() string {
-	return fmt.Sprintf("%s.%s.%s", version.Major, version.Minor, version.Patch)
-}
-
-func getEnabledExtensions() ([]string, error) {
-	stdout, err := exec.Command("gsettings", "get", "org.gnome.shell", "enabled-extensions").Output()
-	if err != nil {
-		return nil, err
-	}
-
-	if string(stdout) == "@as []\n" {
-		return make([]string, 0), nil
-	}
-
-	var enabled []string
-	// the output of gsettings is not valid JSON, as it uses single quotes, but it is valid YAML
-	err = yaml.Unmarshal(stdout, &enabled)
-	if err != nil {
-		return nil, err
-	}
-
-	return enabled, nil
 }
 
 // GetGNOMEVersion returns the current version of GNOME.
@@ -58,6 +30,12 @@ func GetGNOMEVersion() (*GNOMEVersion, error) {
 
 	return version, nil
 }
+
+func (version *GNOMEVersion) String() string {
+	return fmt.Sprintf("%s.%s.%s", version.Major, version.Minor, version.Patch)
+}
+
+const baseURL = "https://extensions.gnome.org"
 
 func setEnabledExtensions(enabled []string) error {
 	json, err := json.Marshal(&enabled)

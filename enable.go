@@ -2,7 +2,7 @@ package gse
 
 // Enable enables an extension by UUID.
 func Enable(uuid string) error {
-	enabled, err := getEnabledExtensions()
+	enabled, err := Enabled()
 	if err != nil {
 		return err
 	}
