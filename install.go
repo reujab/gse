@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -63,7 +64,7 @@ func Install(arg string, enable bool) error {
 		return err
 	}
 	if res.StatusCode != 200 {
-		panic("non-200 status")
+		return errors.New("non-200 status")
 	}
 
 	body, err = ioutil.ReadAll(res.Body)
