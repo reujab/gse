@@ -27,7 +27,7 @@ func Install(arg string, enable bool) error {
 	} else if uuidRegex.MatchString(arg) {
 		query.Add("uuid", arg)
 	} else {
-		return fmt.Errorf("%s%s%s is not an ID or a UUID", bold, arg, normal)
+		return fmt.Errorf("%s is not an ID or a UUID", arg)
 	}
 
 	res, err := http.Get(baseURL + "/extension-info/?" + query.Encode())

@@ -18,9 +18,6 @@ type GNOMEVersion struct {
 }
 
 const baseURL = "https://extensions.gnome.org"
-const bold = csi + "1m"
-const csi = "\x1b["
-const normal = csi + "0m"
 
 func (version *GNOMEVersion) String() string {
 	return fmt.Sprintf("%s.%s.%s", version.Major, version.Minor, version.Patch)
@@ -37,7 +34,6 @@ func getEnabledExtensions() ([]string, error) {
 	}
 
 	var enabled []string
-
 	// the output of gsettings is not valid JSON, as it uses single quotes, but it is valid YAML
 	err = yaml.Unmarshal(stdout, &enabled)
 	if err != nil {
