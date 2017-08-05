@@ -2,7 +2,6 @@ package gse
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -41,7 +40,7 @@ func Search(search, page, version string) ([]*Extension, error) {
 	}
 
 	if res.StatusCode != 200 {
-		return nil, errors.New("non-200 status")
+		return nil, Non200Status
 	}
 
 	body, err := ioutil.ReadAll(res.Body)

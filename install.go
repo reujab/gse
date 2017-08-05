@@ -17,8 +17,12 @@ import (
 	"strconv"
 )
 
-var idRegex = regexp.MustCompile(`^\d+$`)
-var uuidRegex = regexp.MustCompile(`.+@.+\..+`)
+var (
+	idRegex   = regexp.MustCompile(`^\d+$`)
+	uuidRegex = regexp.MustCompile(`.+@.+\..+`)
+)
+
+var Non200Status = errors.New("non-200 status")
 
 // Install installs an extension by ID (pk) or UUID.
 func Install(arg string, enable bool) error {
@@ -64,7 +68,7 @@ func Install(arg string, enable bool) error {
 		return err
 	}
 	if res.StatusCode != 200 {
-		return errors.New("non-200 status")
+		return Non200Status
 	}
 
 	body, err = ioutil.ReadAll(res.Body)
