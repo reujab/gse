@@ -16,7 +16,7 @@ func Disable(uuid string) error {
 	}
 
 	if modified {
-		err = setEnabledExtensions(enabled)
+		err = SetEnabled(enabled)
 		if err != nil {
 			return err
 		}

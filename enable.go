@@ -17,7 +17,7 @@ func Enable(uuid string) error {
 
 	if !alreadyEnabled {
 		enabled = append(enabled, uuid)
-		err = setEnabledExtensions(enabled)
+		err = SetEnabled(enabled)
 		if err != nil {
 			return err
 		}

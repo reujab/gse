@@ -1,11 +1,9 @@
 package gse
 
 import (
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"os/exec"
 )
 
 // GNOMEVersion defines a version of the GNOME Shell.
@@ -36,17 +34,3 @@ func (version *GNOMEVersion) String() string {
 }
 
 const baseURL = "https://extensions.gnome.org"
-
-func setEnabledExtensions(enabled []string) error {
-	json, err := json.Marshal(&enabled)
-	if err != nil {
-		return err
-	}
-
-	err = exec.Command("gsettings", "set", "org.gnome.shell", "enabled-extensions", string(json)).Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
