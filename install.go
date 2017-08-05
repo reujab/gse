@@ -35,7 +35,7 @@ func Install(arg string, enable bool) error {
 		return fmt.Errorf("%s is not an ID or a UUID", arg)
 	}
 
-	res, err := http.Get(baseURL + "/extension-info/?" + query.Encode())
+	res, err := http.Get("https://extensions.gnome.org/extension-info/?" + query.Encode())
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func Install(arg string, enable bool) error {
 
 	query = make(url.Values)
 	query.Add("version_tag", strconv.Itoa(pk))
-	res, err = http.Get(baseURL + "/download-extension/" + details.UUID + ".shell-extension.zip?" + query.Encode())
+	res, err = http.Get("https://extensions.gnome.org/download-extension/" + details.UUID + ".shell-extension.zip?" + query.Encode())
 	if err != nil {
 		return err
 	}

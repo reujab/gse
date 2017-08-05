@@ -34,7 +34,7 @@ func Search(search, page, version string) ([]*Extension, error) {
 	query.Add("page", page)
 	query.Add("search", search)
 	query.Add("shell_version", version)
-	res, err := http.Get(baseURL + "/extension-query/?" + query.Encode())
+	res, err := http.Get("https://extensions.gnome.org/extension-query/?" + query.Encode())
 	if err != nil {
 		return nil, err
 	}
