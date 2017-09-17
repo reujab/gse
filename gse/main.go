@@ -90,7 +90,7 @@ func main() {
 					return err
 				}
 
-				extensions, err := gse.Search(args.First(), ctx.String("page"), version.String())
+				extensions, err := gse.Search(ctx.Args().First(), ctx.String("page"), version.String())
 				if err != nil {
 					return err
 				}
